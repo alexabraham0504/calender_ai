@@ -80,12 +80,20 @@ function getAnthropicProvider(): AIProvider {
 function getGeminiProvider(): AIProvider {
     if (!geminiAdapter) {
         try {
+            logger.debug('Attempting to initialize Gemini adapter', {
+                hasApiKey: !!process.env.GEMINI_API_KEY,
+                apiKeyLength: process.env.GEMINI_API_KEY?.length || 0
+            });
+
             // Dynamic import to avoid loading if not needed
             const { GeminiAdapter } = require('./geminiAdapter');
             geminiAdapter = new GeminiAdapter();
-            logger.info('Gemini adapter initialized');
+            logger.info('✅ Gemini adapter initialized successfully');
         } catch (error) {
-            logger.error('Failed to initialize Gemini adapter, falling back to mock', error);
+            logger.error('❌ Failed to initialize Gemini adapter, falling back to mock', {
+                error: error instanceof Error ? error.message : String(error),
+                stack: error instanceof Error ? error.stack : undefined
+            });
             return getMockProvider();
         }
     }

@@ -36,10 +36,10 @@ export class ReminderService {
             const doc = await this.userSettingsCollection.doc(userId).get();
 
             if (!doc.exists) {
-                // Return defaults
+                // Return defaults - EMAIL NOW ENABLED BY DEFAULT
                 return {
                     defaultReminderMinutes: 15,
-                    enableEmail: false,
+                    enableEmail: true, // ← Changed from false to true
                     enableInApp: true,
                 };
             }
@@ -54,7 +54,7 @@ export class ReminderService {
             logger.error('Error fetching reminder settings', error);
             return {
                 defaultReminderMinutes: 15,
-                enableEmail: false,
+                enableEmail: true, // ← Changed from false to true
                 enableInApp: true,
             };
         }
@@ -168,23 +168,34 @@ export class ReminderService {
             const now = Timestamp.now();
             const oneMinuteLater = Timestamp.fromDate(new Date(Date.now() + 60 * 1000));
 
-            // Find reminders that should trigger in the next minute and haven't been delivered
+            // Simplified query to avoid composite index requirement
+            // Fetch all undelivered reminders and filter by time in memory
             const snapshot = await this.collection
                 .where('delivered', '==', false)
                 .where('triggerTime', '<=', oneMinuteLater)
-                .where('triggerTime', '>', now)
                 .get();
 
             if (snapshot.empty) {
                 return 0;
             }
 
-            logger.info(`Processing ${snapshot.size} pending reminders`);
+            // Filter out reminders that are too far in the past (already processed)
+            const validDocs = snapshot.docs.filter((doc: any) => {
+                const triggerTime = doc.data().triggerTime;
+                return triggerTime && triggerTime.toMillis() > now.toMillis();
+            });
+
+            if (validDocs.length === 0) {
+                return 0;
+            }
+
+
+            logger.info(`Processing ${validDocs.length} pending reminders`);
 
             const batch = db.batch();
             const deliveryPromises: Promise<void>[] = [];
 
-            snapshot.docs.forEach((doc: any) => {
+            validDocs.forEach((doc: any) => {
                 const reminder = { id: doc.id, ...doc.data() } as Reminder;
 
                 // Deliver reminder
@@ -200,8 +211,8 @@ export class ReminderService {
                 batch.commit(),
             ]);
 
-            logger.success(`Processed ${snapshot.size} reminders`);
-            return snapshot.size;
+            logger.success(`Processed ${validDocs.length} reminders`);
+            return validDocs.length;
         } catch (error) {
             logger.error('Error processing pending reminders', error);
             return 0;

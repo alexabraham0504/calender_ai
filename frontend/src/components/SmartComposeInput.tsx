@@ -38,11 +38,26 @@ const SmartComposeInput: React.FC<SmartComposeInputProps> = ({
                     setInput(''); // Clear input on success
                 }
             } else {
+                // Show the error from the API
                 setError(response.error || 'Failed to understand request');
             }
-        } catch (err) {
+        } catch (err: any) {
             logger.error('Error in smart compose submit', err);
-            setError('Something went wrong. Please try again.');
+
+            // Provide user-friendly error messages
+            let errorMessage = 'Something went wrong. Please try again.';
+
+            if (err.message?.includes('rate limited') || err.message?.includes('429') || err.message?.includes('quota')) {
+                errorMessage = '⏱️ AI is rate limited. Please wait a moment and try again.';
+            } else if (err.message?.includes('not properly configured') || err.message?.includes('API key')) {
+                errorMessage = '⚙️ AI service needs configuration. Please contact support.';
+            } else if (err.message?.includes('network') || err.message?.includes('Failed to fetch')) {
+                errorMessage = '📡 Connection issue. Check your internet and try again.';
+            } else if (err.message) {
+                errorMessage = err.message;
+            }
+
+            setError(errorMessage);
         } finally {
             setIsLoading(false);
         }

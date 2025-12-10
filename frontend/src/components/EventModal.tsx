@@ -1,22 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { auth } from '../config/firebase';
+import type { CalendarEvent } from '../types/event';
 import { logger } from '../utils/logger';
-
-interface Event {
-    _id: string;
-    title: string;
-    startDate: string;
-    endDate: string;
-    description?: string;
-    recurrence: string;
-    color?: string;
-}
 
 interface EventModalProps {
     isOpen: boolean;
     onClose: () => void;
     onEventAdded: () => void;
-    event?: Event | null;
+    event?: CalendarEvent | null;
 }
 
 const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onEventAdded, event }) => {

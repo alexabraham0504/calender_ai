@@ -86,9 +86,25 @@ export const parseIntent = async (req: AuthRequest, res: Response) => {
         const errorMessage = error instanceof Error ? error.message : 'Failed to parse intent';
         logger.error('Error in parseIntent controller', error);
 
-        res.status(500).json({
+        // Determine error type and status code
+        let statusCode = 500;
+        let userMessage = errorMessage;
+
+        if (errorMessage.includes('429') || errorMessage.includes('quota') || errorMessage.includes('rate limit')) {
+            statusCode = 429;
+            userMessage = 'AI service is temporarily rate limited. Please try again in a few moments.';
+        } else if (errorMessage.includes('GEMINI_API_KEY') || errorMessage.includes('API key')) {
+            statusCode = 503;
+            userMessage = 'AI service is not properly configured. Please contact support.';
+        } else if (errorMessage.includes('network') || errorMessage.includes('ECONNREFUSED')) {
+            statusCode = 503;
+            userMessage = 'Unable to connect to AI service. Please check your internet connection.';
+        }
+
+        res.status(statusCode).json({
             success: false,
-            error: errorMessage
+            error: userMessage,
+            details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
         } as AIResponse);
     }
 };

@@ -3,20 +3,11 @@ import Calendar from './Calendar';
 import ManageEvents from './ManageEvents';
 import EventModal from './EventModal';
 import { logger } from '../utils/logger';
-
-interface Event {
-    _id: string;
-    title: string;
-    startDate: string;
-    endDate: string;
-    description?: string;
-    recurrence: string;
-    color?: string;
-}
+import type { CalendarEvent } from '../types/event';
 
 const Dashboard: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+    const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [view, setView] = useState<'calendar' | 'manage'>('calendar');
 
@@ -47,7 +38,7 @@ const Dashboard: React.FC = () => {
         };
     }, []);
 
-    const handleEditEvent = (event: Event) => {
+    const handleEditEvent = (event: CalendarEvent) => {
         logger.userAction('Edit event clicked', { eventId: event._id, title: event.title });
         setSelectedEvent(event);
         setIsModalOpen(true);

@@ -8,6 +8,7 @@ import roleRoutes from './routes/roleRoutes';
 import inviteRoutes from './routes/inviteRoutes';
 import aiRoutes from './routes/aiRoutes';
 import notificationRoutes from './routes/notificationRoutes';
+import testRoutes from './routes/testRoutes';
 import { logger } from './utils/logger';
 import { requestLogger, errorLogger } from './middleware/requestLogger';
 import { reminderWorker } from './worker/reminderWorker';
@@ -48,6 +49,9 @@ logger.debug('✓ /api/ai');
 
 app.use('/api/notifications', notificationRoutes);
 logger.debug('✓ /api/notifications');
+
+app.use('/api/test', testRoutes);
+logger.debug('✓ /api/test');
 
 app.get('/health', (req, res) => {
     res.json({ status: 'OK', timestamp: new Date().toISOString(), uptime: process.uptime() });

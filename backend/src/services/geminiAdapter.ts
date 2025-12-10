@@ -11,6 +11,8 @@ import { findAvailableSlots } from './schedulerService';
 export class GeminiAdapter implements AIProvider {
     private genAI: GoogleGenerativeAI;
     private model: any;
+    private readonly MAX_RETRIES = 3;
+    private readonly INITIAL_DELAY = 1000; // 1 second
 
     constructor() {
         const apiKey = process.env.GEMINI_API_KEY;
@@ -25,6 +27,42 @@ export class GeminiAdapter implements AIProvider {
         });
 
         logger.info('Gemini adapter initialized with gemini-2.0-flash-exp');
+    }
+
+    /**
+     * Helper: Retry with exponential backoff
+     */
+    private async retryWithBackoff<T>(
+        fn: () => Promise<T>,
+        retries: number = this.MAX_RETRIES
+    ): Promise<T> {
+        let lastError: any;
+
+        for (let attempt = 0; attempt <= retries; attempt++) {
+            try {
+                return await fn();
+            } catch (error: any) {
+                lastError = error;
+
+                // Check if error is rate limit related
+                const isRateLimit = error.message?.includes('429') ||
+                    error.message?.includes('quota') ||
+                    error.message?.includes('rate limit') ||
+                    error.message?.includes('RESOURCE_EXHAUSTED');
+
+                if (attempt < retries && isRateLimit) {
+                    const delay = this.INITIAL_DELAY * Math.pow(2, attempt);
+                    logger.warn(`Rate limit hit, retrying in ${delay}ms (attempt ${attempt + 1}/${retries})`, {
+                        error: error.message
+                    });
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                } else {
+                    throw error;
+                }
+            }
+        }
+
+        throw lastError;
     }
 
     /**
@@ -61,10 +99,13 @@ Example output:
   "isFlexible": true
 }`;
 
-            const result = await this.model.generateContent([
-                systemPrompt,
-                `User request: ${prompt}`
-            ]);
+            // Use retry mechanism for API call
+            const result = await this.retryWithBackoff(async () => {
+                return await this.model.generateContent([
+                    systemPrompt,
+                    `User request: ${prompt}`
+                ]);
+            });
 
             const response = await result.response;
             let text = response.text();
@@ -146,10 +187,12 @@ Example output:
 
 Ask a friendly, conversational question to get the missing details. Be brief and helpful.`;
 
-            const result = await this.model.generateContent([
-                systemPrompt,
-                `Original request: "${prompt}"`
-            ]);
+            const result = await this.retryWithBackoff(async () => {
+                return await this.model.generateContent([
+                    systemPrompt,
+                    `Original request: "${prompt}"`
+                ]);
+            });
 
             const response = await result.response;
             const question = response.text() ||

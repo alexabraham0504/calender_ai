@@ -1,27 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth } from '../config/firebase';
+import type { CalendarEvent } from '../types/event';
 import { collection, query, where, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { logger } from '../utils/logger';
 
-interface Event {
-    _id: string;
-    title: string;
-    startDate: string;
-    endDate: string;
-    description?: string;
-    location?: string;
-    priority?: 'low' | 'medium' | 'high';
-    color?: string;
-    createdBy?: string;
-}
-
 interface ManageEventsProps {
-    onEditEvent: (event: Event) => void;
+    onEditEvent: (event: CalendarEvent) => void;
 }
 
 const ManageEvents: React.FC<ManageEventsProps> = ({ onEditEvent }) => {
-    const [events, setEvents] = useState<Event[]>([]);
+    const [events, setEvents] = useState<CalendarEvent[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<'all' | 'upcoming' | 'past'>('upcoming');
     const [searchTerm, setSearchTerm] = useState('');
@@ -43,7 +32,7 @@ const ManageEvents: React.FC<ManageEventsProps> = ({ onEditEvent }) => {
                     const eventsData = snapshot.docs.map(doc => ({
                         _id: doc.id,
                         ...doc.data()
-                    })) as Event[];
+                    })) as CalendarEvent[];
 
                     logger.success(`Events loaded: ${eventsData.length}`);
                     setEvents(eventsData);

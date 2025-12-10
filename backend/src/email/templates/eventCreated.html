@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Event Reminder</title>
+    <title>New Event Created</title>
 </head>
 
 <body
@@ -18,26 +18,26 @@
                     <!-- Header -->
                     <tr>
                         <td
-                            style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; text-align: center;">
+                            style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 40px 30px; text-align: center;">
                             <h1
                                 style="margin: 0; color: #ffffff; font-size: 32px; font-weight: 700; letter-spacing: -0.5px;">
-                                📅 Event Reminder
+                                ✨ New Event Created
                             </h1>
                             <p style="margin: 10px 0 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">
-                                Your upcoming event is approaching soon
+                                An event has been added to your calendar
                             </p>
                         </td>
                     </tr>
 
-                    <!-- Alert Banner -->
+                    <!-- Success Banner -->
                     <tr>
-                        <td style="background-color: #fef3c7; padding: 20px 30px; border-bottom: 3px solid #f59e0b;">
+                        <td style="background-color: #d1fae5; padding: 20px 30px; border-bottom: 3px solid #10b981;">
                             <table width="100%" cellpadding="0" cellspacing="0">
                                 <tr>
                                     <td style="text-align: center;">
-                                        <span style="font-size: 24px; margin-right: 10px;">⏰</span>
-                                        <span style="color: #92400e; font-size: 18px; font-weight: 600;">
-                                            Your event starts in {{timeUntil}}
+                                        <span style="font-size: 24px; margin-right: 10px;">✅</span>
+                                        <span style="color: #065f46; font-size: 18px; font-weight: 600;">
+                                            Event successfully scheduled!
                                         </span>
                                     </td>
                                 </tr>
@@ -48,13 +48,20 @@
                     <!-- Event Details -->
                     <tr>
                         <td style="padding: 40px 30px;">
+                            <p style="margin: 0 0 8px 0; color: #6b7280; font-size: 14px; font-weight: 500;">
+                                CREATED BY
+                            </p>
+                            <p style="margin: 0 0 24px 0; color: #1f2937; font-size: 16px; font-weight: 600;">
+                                {{createdBy}}
+                            </p>
+
                             <h2 style="margin: 0 0 24px 0; color: #1f2937; font-size: 24px; font-weight: 600;">
                                 {{eventTitle}}
                             </h2>
 
                             <!-- Date & Time Card -->
                             <table width="100%" cellpadding="0" cellspacing="0"
-                                style="background-color: #f9fafb; border-radius: 12px; padding: 20px; border-left: 4px solid #667eea; margin-bottom: 20px;">
+                                style="background-color: #f0fdf4; border-radius: 12px; padding: 20px; border-left: 4px solid #10b981; margin-bottom: 30px;">
                                 <tr>
                                     <td>
                                         <table width="100%" cellpadding="0" cellspacing="0">
@@ -100,27 +107,13 @@
                                 </tr>
                             </table>
 
-                            <!-- Quick Tip -->
-                            <table width="100%" cellpadding="0" cellspacing="0"
-                                style="background-color: #eff6ff; border-radius: 12px; padding: 16px; margin-bottom: 30px;">
-                                <tr>
-                                    <td>
-                                        <p style="margin: 0; color: #1e40af; font-size: 14px; line-height: 1.6;">
-                                            <span style="font-size: 18px; margin-right: 8px;">💡</span>
-                                            <strong>Quick Tip:</strong> Make sure you have everything ready
-                                            {{minutesBefore}} minutes before the event starts!
-                                        </p>
-                                    </td>
-                                </tr>
-                            </table>
-
                             <!-- CTA Button -->
                             <table width="100%" cellpadding="0" cellspacing="0">
                                 <tr>
                                     <td align="center" style="padding: 10px 0;">
                                         <a href="http://localhost:4321"
-                                            style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 12px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); transition: transform 0.2s;">
-                                            📆 View Your Calendar
+                                            style="display: inline-block; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 12px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);">
+                                            📆 View in Calendar
                                         </a>
                                     </td>
                                 </tr>
@@ -133,11 +126,10 @@
                         <td
                             style="background-color: #f9fafb; padding: 30px; text-align: center; border-top: 1px solid #e5e7eb;">
                             <p style="margin: 0 0 8px 0; color: #6b7280; font-size: 14px;">
-                                This is an automated reminder from <strong style="color: #667eea;">Calendar AI</strong>
+                                Notification from <strong style="color: #10b981;">Calendar AI</strong>
                             </p>
                             <p style="margin: 0; color: #9ca3af; font-size: 12px;">
-                                You're receiving this because you set a reminder {{minutesBefore}} minutes before this
-                                event
+                                You'll receive a reminder before this event starts
                             </p>
                             <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
                                 <p style="margin: 0; color: #9ca3af; font-size: 11px;">

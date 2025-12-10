@@ -158,7 +158,7 @@ export class EmailService {
 
             return await this.sendEmail(
                 to,
-                `Reminder: ${eventTitle}`,
+                `⏰ Reminder: ${eventTitle}`,
                 html
             );
         } catch (error) {
