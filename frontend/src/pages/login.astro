@@ -1,0 +1,650 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Login">
+  <!-- Animated Background -->
+  <div class="login-background">
+    <div class="gradient-orb orb-1"></div>
+    <div class="gradient-orb orb-2"></div>
+    <div class="gradient-orb orb-3"></div>
+    <div class="particles">
+      {Array.from({ length: 20 }).map((_, i) => (
+        <div class="particle" style={`--delay: ${i * 0.2}s; --x: ${Math.random() * 100}%; --y: ${Math.random() * 100}%`}></div>
+      ))}
+    </div>
+  </div>
+
+  <!-- Login Container -->
+  <div class="login-container">
+    <div class="login-card">
+      <!-- Logo/Title Section -->
+      <div class="login-header">
+        <div class="logo-circle">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 4H5C3.89543 4 3 4.89543 3 6V20C3 21.1046 3.89543 22 5 22H19C20.1046 22 21 21.1046 21 20V6C21 4.89543 20.1046 4 19 4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M16 2V6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M8 2V6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M3 10H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h1 class="login-title">Welcome Back</h1>
+        <p class="login-subtitle">Sign in to your calendar account</p>
+      </div>
+
+      <!-- Login Form -->
+      <form id="login-form" class="login-form">
+        <div class="form-group">
+          <label for="email" class="form-label">
+            <svg class="label-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 4H20C21.1 4 22 4.9 22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6C2 4.9 2.9 4 4 4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M22 6L12 13L2 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Email Address
+          </label>
+          <input 
+            type="email" 
+            id="email"
+            name="email" 
+            class="form-input" 
+            placeholder="you@example.com"
+            required 
+            autocomplete="email"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="password" class="form-label">
+            <svg class="label-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M19 11H5C3.89543 11 3 11.8954 3 13V20C3 21.1046 3.89543 22 5 22H19C20.1046 22 21 21.1046 21 20V13C21 11.8954 20.1046 11 19 11Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M7 11V7C7 5.67392 7.52678 4.40215 8.46447 3.46447C9.40215 2.52678 10.6739 2 12 2C13.3261 2 14.5979 2.52678 15.5355 3.46447C16.4732 4.40215 17 5.67392 17 7V11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Password
+          </label>
+          <input 
+            type="password" 
+            id="password"
+            name="password" 
+            class="form-input" 
+            placeholder="••••••••"
+            required 
+            autocomplete="current-password"
+          />
+        </div>
+
+        <button type="submit" class="submit-button">
+          <span class="button-text">Sign In</span>
+          <svg class="button-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 5L19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </form>
+
+      <!-- Footer -->
+      <div class="login-footer">
+        <p class="footer-text">
+          Don't have an account? 
+          <a href="/signup" class="footer-link">Create one now</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    import { signInWithEmailAndPassword } from 'firebase/auth';
+    import { auth } from '../config/firebase';
+
+    const form = document.getElementById('login-form') as HTMLFormElement;
+    form?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const button = form.querySelector('.submit-button') as HTMLButtonElement;
+      const buttonText = button.querySelector('.button-text') as HTMLSpanElement;
+      const originalText = buttonText.textContent;
+      
+      // Loading state
+      button.disabled = true;
+      button.classList.add('loading');
+      buttonText.textContent = 'Signing in...';
+      
+      const formData = new FormData(form);
+      const email = formData.get('email') as string;
+      const password = formData.get('password') as string;
+
+      try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const token = await userCredential.user.getIdToken();
+        localStorage.setItem('token', token);
+        
+        buttonText.textContent = 'Success!';
+        button.classList.add('success');
+        
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 500);
+      } catch (error) {
+        console.error('Error:', error);
+        
+        button.classList.add('error');
+        buttonText.textContent = 'Failed!';
+        
+        // Show error message
+        const errorMsg = document.createElement('div');
+        errorMsg.className = 'error-message';
+        errorMsg.textContent = (error as Error).message;
+        form.appendChild(errorMsg);
+        
+        setTimeout(() => {
+          button.disabled = false;
+          button.classList.remove('loading', 'error');
+          buttonText.textContent = originalText;
+          errorMsg.remove();
+        }, 3000);
+      }
+    });
+  </script>
+</Layout>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+  * {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  /* Animated Background */
+  .login-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    z-index: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+
+  :global(.dark) .login-background {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  }
+
+  /* Gradient Orbs */
+  .gradient-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.6;
+    animation: float 20s infinite ease-in-out;
+  }
+
+  .orb-1 {
+    width: 500px;
+    height: 500px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    top: -10%;
+    left: -10%;
+    animation-delay: 0s;
+  }
+
+  .orb-2 {
+    width: 400px;
+    height: 400px;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    bottom: -10%;
+    right: -10%;
+    animation-delay: -7s;
+  }
+
+  .orb-3 {
+    width: 350px;
+    height: 350px;
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation-delay: -14s;
+  }
+
+  :global(.dark) .orb-1 {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    opacity: 0.3;
+  }
+
+  :global(.dark) .orb-2 {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    opacity: 0.3;
+  }
+
+  :global(.dark) .orb-3 {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    opacity: 0.3;
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translate(0, 0) scale(1);
+    }
+    33% {
+      transform: translate(30px, -50px) scale(1.1);
+    }
+    66% {
+      transform: translate(-20px, 20px) scale(0.9);
+    }
+  }
+
+  /* Particles */
+  .particles {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    left: var(--x);
+    top: var(--y);
+    animation: particle-float 15s infinite ease-in-out;
+    animation-delay: var(--delay);
+  }
+
+  :global(.dark) .particle {
+    background: rgba(255, 255, 255, 0.3);
+  }
+
+  @keyframes particle-float {
+    0%, 100% {
+      transform: translateY(0) translateX(0);
+      opacity: 0;
+    }
+    10% {
+      opacity: 1;
+    }
+    90% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(-100vh) translateX(50px);
+      opacity: 0;
+    }
+  }
+
+  /* Login Container */
+  .login-container {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 1rem 1rem;
+  }
+
+  /* Login Card */
+  .login-card {
+    width: 100%;
+    max-width: 440px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 24px;
+    padding: 2rem 2rem;
+    box-shadow: 
+      0 20px 60px rgba(0, 0, 0, 0.1),
+      0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+    animation: card-float 6s infinite ease-in-out;
+    transition: all 0.3s ease;
+  }
+
+  :global(.dark) .login-card {
+    background: rgba(30, 30, 46, 0.85);
+    box-shadow: 
+      0 20px 60px rgba(0, 0, 0, 0.5),
+      0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  }
+
+  .login-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 
+      0 30px 80px rgba(0, 0, 0, 0.15),
+      0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+  }
+
+  :global(.dark) .login-card:hover {
+    box-shadow: 
+      0 30px 80px rgba(0, 0, 0, 0.7),
+      0 0 0 1px rgba(255, 255, 255, 0.15) inset;
+  }
+
+  @keyframes card-float {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  /* Header */
+  .login-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .logo-circle {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 1rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+    animation: logo-pulse 3s infinite ease-in-out;
+  }
+
+  :global(.dark) .logo-circle {
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.6);
+  }
+
+  .logo-circle svg {
+    width: 30px;
+    height: 30px;
+  }
+
+  @keyframes logo-pulse {
+    0%, 100% {
+      transform: scale(1);
+      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+    }
+    50% {
+      transform: scale(1.05);
+      box-shadow: 0 15px 40px rgba(102, 126, 234, 0.6);
+    }
+  }
+
+  .login-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1a202c;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  :global(.dark) .login-title {
+    background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .login-subtitle {
+    font-size: 0.95rem;
+    color: #64748b;
+    font-weight: 500;
+  }
+
+  :global(.dark) .login-subtitle {
+    color: #94a3b8;
+  }
+
+  /* Form */
+  .login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .form-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #334155;
+    transition: color 0.2s ease;
+  }
+
+  :global(.dark) .form-label {
+    color: #e2e8f0;
+  }
+
+  .label-icon {
+    width: 18px;
+    height: 18px;
+    color: #667eea;
+  }
+
+  :global(.dark) .label-icon {
+    color: #818cf8;
+  }
+
+  .form-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    color: #1e293b;
+    background: rgba(255, 255, 255, 0.8);
+    border: 2px solid rgba(148, 163, 184, 0.3);
+    border-radius: 12px;
+    outline: none;
+    transition: all 0.3s ease;
+  }
+
+  :global(.dark) .form-input {
+    color: #f1f5f9;
+    background: rgba(51, 65, 85, 0.5);
+    border-color: rgba(148, 163, 184, 0.2);
+  }
+
+  .form-input::placeholder {
+    color: #94a3b8;
+  }
+
+  :global(.dark) .form-input::placeholder {
+    color: #64748b;
+  }
+
+  .form-input:focus {
+    border-color: #667eea;
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+    transform: translateY(-2px);
+  }
+
+  :global(.dark) .form-input:focus {
+    border-color: #818cf8;
+    background: rgba(51, 65, 85, 0.8);
+    box-shadow: 0 0 0 4px rgba(129, 140, 248, 0.2);
+  }
+
+  /* Submit Button */
+  .submit-button {
+    margin-top: 0.25rem;
+    width: 100%;
+    padding: 1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .submit-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s ease;
+  }
+
+  .submit-button:hover::before {
+    left: 100%;
+  }
+
+  .submit-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+  }
+
+  .submit-button:active {
+    transform: translateY(0);
+  }
+
+  .submit-button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+
+  .button-text {
+    position: relative;
+    z-index: 1;
+  }
+
+  .button-icon {
+    width: 20px;
+    height: 20px;
+    position: relative;
+    z-index: 1;
+    transition: transform 0.3s ease;
+  }
+
+  .submit-button:hover .button-icon {
+    transform: translateX(4px);
+  }
+
+  .submit-button.loading {
+    background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
+  }
+
+  .submit-button.success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  }
+
+  .submit-button.error {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  }
+
+  /* Footer */
+  .login-footer {
+    margin-top: 1.5rem;
+    text-align: center;
+  }
+
+  .footer-text {
+    font-size: 0.875rem;
+    color: #64748b;
+  }
+
+  :global(.dark) .footer-text {
+    color: #94a3b8;
+  }
+
+  .footer-link {
+    color: #667eea;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    position: relative;
+  }
+
+  :global(.dark) .footer-link {
+    color: #818cf8;
+  }
+
+  .footer-link::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    transition: width 0.3s ease;
+  }
+
+  .footer-link:hover::after {
+    width: 100%;
+  }
+
+  .footer-link:hover {
+    color: #764ba2;
+  }
+
+  :global(.dark) .footer-link:hover {
+    color: #c084fc;
+  }
+
+  /* Error Message */
+  .error-message {
+    margin-top: 1rem;
+    padding: 0.875rem 1rem;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 8px;
+    color: #dc2626;
+    font-size: 0.875rem;
+    animation: shake 0.5s ease;
+  }
+
+  :global(.dark) .error-message {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #f87171;
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-10px); }
+    75% { transform: translateX(10px); }
+  }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .login-card {
+      padding: 2rem 1.5rem;
+    }
+
+    .login-title {
+      font-size: 1.75rem;
+    }
+
+    .logo-circle {
+      width: 70px;
+      height: 70px;
+    }
+
+    .logo-circle svg {
+      width: 35px;
+      height: 35px;
+    }
+  }
+</style>
