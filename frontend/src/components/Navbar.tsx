@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { auth } from '../config/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
+import NotificationBell from './NotificationBell';
+import NotificationDropdown from './NotificationDropdown';
 
 const Navbar: React.FC = () => {
     const [user, setUser] = useState<any>(null);
     const [theme, setTheme] = useState<'light' | 'dark'>('light');
+    const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
 
     useEffect(() => {
         // Auth listener
@@ -119,6 +122,19 @@ const Navbar: React.FC = () => {
                             </svg>
                         )}
                     </button>
+
+                    {/* Notification Bell (only for authenticated users) */}
+                    {user && (
+                        <div className="relative">
+                            <NotificationBell
+                                onOpenDropdown={() => setIsNotificationDropdownOpen(!isNotificationDropdownOpen)}
+                            />
+                            <NotificationDropdown
+                                isOpen={isNotificationDropdownOpen}
+                                onClose={() => setIsNotificationDropdownOpen(false)}
+                            />
+                        </div>
+                    )}
 
                     <a href="/" className="nav-link">
                         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

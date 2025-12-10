@@ -68,8 +68,8 @@ const Dashboard: React.FC = () => {
     if (!isAuthenticated) {
         return (
             <div className="text-center mt-20">
-                <h2 className="text-2xl font-bold text-gray-700">Please Log In</h2>
-                <p className="text-gray-500 mt-2">You need to be logged in to view and manage your calendar.</p>
+                <h2 className="text-2xl font-bold text-gray-700 dark:text-gray-200">Please Log In</h2>
+                <p className="text-gray-500 dark:text-gray-400 mt-2">You need to be logged in to view and manage your calendar.</p>
                 <a href="/login" className="inline-block mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
                     Go to Login
                 </a>

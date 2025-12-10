@@ -7,8 +7,10 @@ import workspaceRoutes from './routes/workspaceRoutes';
 import roleRoutes from './routes/roleRoutes';
 import inviteRoutes from './routes/inviteRoutes';
 import aiRoutes from './routes/aiRoutes';
+import notificationRoutes from './routes/notificationRoutes';
 import { logger } from './utils/logger';
 import { requestLogger, errorLogger } from './middleware/requestLogger';
+import { reminderWorker } from './worker/reminderWorker';
 
 dotenv.config();
 
@@ -30,8 +32,7 @@ logger.debug('✓ Logger');
 app.use('/api/events', eventRoutes);
 logger.debug('✓ /api/events');
 
-app.use('/api/settings', settingsRoutes);
-logger.debug('✓ /api/settings');
+app.use('/api/settings', settingsRoutes); logger.debug('✓ /api/settings');
 
 app.use('/api/workspaces', workspaceRoutes);
 logger.debug('✓ /api/workspaces');
@@ -44,6 +45,9 @@ logger.debug('✓ /api/workspaces/invite');
 
 app.use('/api/ai', aiRoutes);
 logger.debug('✓ /api/ai');
+
+app.use('/api/notifications', notificationRoutes);
+logger.debug('✓ /api/notifications');
 
 app.get('/health', (req, res) => {
     res.json({ status: 'OK', timestamp: new Date().toISOString(), uptime: process.uptime() });
@@ -67,6 +71,9 @@ const server = app.listen(PORT, () => {
     logger.success(`✅ Ready on :${PORT}`);
     logger.info(`http://localhost:${PORT}`);
     logger.separator();
+
+    // Start reminder worker
+    reminderWorker.start();
 });
 
 process.on('SIGTERM', () => {

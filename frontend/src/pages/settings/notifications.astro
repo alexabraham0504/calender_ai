@@ -1,0 +1,35 @@
+---
+import Layout from '../../layouts/Layout.astro';
+---
+
+<Layout title="Notification Settings - Calendar AI">
+    <div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+        <div class="max-w-4xl mx-auto px-4">
+            <div class="mb-8">
+                <a href="/settings" class="text-blue-600 dark:text-blue-400 hover:underline mb-4 inline-block">
+                    ← Back to Settings
+                </a>
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
+                    Notification Settings
+                </h1>
+                <p class="text-gray-600 dark:text-gray-400 mt-2">
+                    Manage how and when you receive notifications
+                </p>
+            </div>
+            
+            <div id="notification-settings-root"></div>
+        </div>
+    </div>
+</Layout>
+
+<script>
+    import React from 'react';
+    import { createRoot } from 'react-dom/client';
+    import NotificationSettings from '../../components/NotificationSettings';
+
+    const container = document.getElementById('notification-settings-root');
+    if (container) {
+        const root = createRoot(container);
+        root.render(React.createElement(NotificationSettings));
+    }
+</script>

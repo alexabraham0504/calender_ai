@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Reminder</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #2563eb;
+        }
+        .header h1 {
+            color: #2563eb;
+            margin: 0;
+            font-size: 24px;
+        }
+        .bell-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        .event-details {
+            background-color: #f8fafc;
+            border-left: 4px solid #2563eb;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .event-title {
+            font-size: 22px;
+            font-weight: bold;
+            color: #1e293b;
+            margin: 0 0 15px 0;
+        }
+        .detail-row {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            font-size: 16px;
+        }
+        .detail-icon {
+            margin-right: 10px;
+            font-size: 18px;
+        }
+        .time-until {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+            color: #64748b;
+            font-size: 14px;
+        }
+        .button {
+            display: inline-block;
+            background-color: #2563eb;
+            color: white;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 20px 0;
+            font-weight: 600;
+        }
+        .button:hover {
+            background-color: #1d4ed8;
+        }
+        @media only screen and (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            .container {
+                padding: 20px;
+            }
+            .event-title {
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="bell-icon">🔔</div>
+            <h1>Event Reminder</h1>
+        </div>
+
+        <div class="time-until">
+            ⏰ Your event starts {{timeUntil}}
+        </div>
+
+        <div class="event-details">
+            <h2 class="event-title">{{eventTitle}}</h2>
+            
+            <div class="detail-row">
+                <span class="detail-icon">📅</span>
+                <strong>Date:</strong>&nbsp;{{eventDate}}
+            </div>
+            
+            <div class="detail-row">
+                <span class="detail-icon">🕐</span>
+                <strong>Time:</strong>&nbsp;{{eventTime}}
+            </div>
+        </div>
+
+        <div style="text-align: center;">
+            <a href="http://localhost:4321" class="button">View in Calendar</a>
+        </div>
+
+        <div class="footer">
+            <p>This is an automated reminder from Calendar AI</p>
+            <p style="font-size: 12px; color: #94a3b8;">
+                You're receiving this because you set a reminder {{minutesBefore}} minutes before this event.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

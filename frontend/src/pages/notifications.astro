@@ -1,0 +1,19 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Notifications - Calendar AI">
+    <div id="notifications-root"></div>
+</Layout>
+
+<script>
+    import React from 'react';
+    import { createRoot } from 'react-dom/client';
+    import NotificationsCenter from '../components/NotificationsCenter';
+
+    const container = document.getElementById('notifications-root');
+    if (container) {
+        const root = createRoot(container);
+        root.render(React.createElement(NotificationsCenter));
+    }
+</script>

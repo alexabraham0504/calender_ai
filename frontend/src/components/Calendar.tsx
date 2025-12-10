@@ -212,8 +212,12 @@ const Calendar: React.FC<CalendarProps> = ({ onEditEvent }) => {
                                 {blanks.map((_, i) => <div key={`b-${i}`}></div>)}
                                 {dayArray.map(d => {
                                     const currentDayDate = new Date(currentYear, monthIndex, d);
-                                    const dateStr = currentDayDate.toISOString().split('T')[0];
-                                    const hasEvents = events.some(e => e.startDate.startsWith(dateStr));
+                                    // Use local date format
+                                    const year = currentDayDate.getFullYear();
+                                    const month = String(currentDayDate.getMonth() + 1).padStart(2, '0');
+                                    const dayStr = String(currentDayDate.getDate()).padStart(2, '0');
+                                    const dateStr = `${year}-${month}-${dayStr}`;
+                                    const hasEvents = events.some(e => e.startDate.substring(0, 10) === dateStr);
                                     const isHoliday = getHolidaysForDate(currentDayDate).length > 0;
                                     const isToday = new Date().toISOString().split('T')[0] === dateStr;
 
@@ -321,8 +325,16 @@ const Calendar: React.FC<CalendarProps> = ({ onEditEvent }) => {
                         ))}
                         {dayArray.map((day) => {
                             const currentDayDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
-                            const dateStr = currentDayDate.toISOString().split('T')[0];
-                            const dayEvents = events.filter((e) => e.startDate.startsWith(dateStr));
+                            // Use local date format instead of ISO to avoid timezone issues
+                            const year = currentDayDate.getFullYear();
+                            const month = String(currentDayDate.getMonth() + 1).padStart(2, '0');
+                            const dayStr = String(currentDayDate.getDate()).padStart(2, '0');
+                            const dateStr = `${year}-${month}-${dayStr}`;
+                            const dayEvents = events.filter((e) => {
+                                // Extract just the date part from the event's startDate
+                                const eventDateStr = e.startDate.substring(0, 10);
+                                return eventDateStr === dateStr;
+                            });
                             const holidays = getHolidaysForDate(currentDayDate);
                             const isToday = new Date().toISOString().split('T')[0] === dateStr;
 
@@ -402,7 +414,13 @@ const Calendar: React.FC<CalendarProps> = ({ onEditEvent }) => {
 
                                 <div className="space-y-2 flex-1">
                                     {events
-                                        .filter((e) => e.startDate.startsWith(date.toISOString().split('T')[0]))
+                                        .filter((e) => {
+                                            const year = date.getFullYear();
+                                            const month = String(date.getMonth() + 1).padStart(2, '0');
+                                            const day = String(date.getDate()).padStart(2, '0');
+                                            const localDateStr = `${year}-${month}-${day}`;
+                                            return e.startDate.substring(0, 10) === localDateStr;
+                                        })
                                         .map((e) => (
                                             <div
                                                 key={e._id}
@@ -427,8 +445,11 @@ const Calendar: React.FC<CalendarProps> = ({ onEditEvent }) => {
     };
 
     const renderDayView = () => {
-        const dateStr = currentDate.toISOString().split('T')[0];
-        const dayEvents = events.filter((e) => e.startDate.startsWith(dateStr));
+        const year = currentDate.getFullYear();
+        const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+        const day = String(currentDate.getDate()).padStart(2, '0');
+        const dateStr = `${year}-${month}-${day}`;
+        const dayEvents = events.filter((e) => e.startDate.substring(0, 10) === dateStr);
         const holidays = getHolidaysForDate(currentDate);
         const holidaysList = Array.isArray(holidays) ? holidays : [];
 
