@@ -1,4 +1,4 @@
-import { db } from '../config/firebase';
+import { db, auth } from '../config/firebase';
 import { logger } from '../utils/logger';
 import { Timestamp, FieldValue } from 'firebase-admin/firestore';
 import { notificationService } from './notificationService';
@@ -38,7 +38,7 @@ export class ReminderService {
             if (!doc.exists) {
                 // Return defaults - EMAIL NOW ENABLED BY DEFAULT
                 return {
-                    defaultReminderMinutes: 15,
+                    defaultReminderMinutes: 5, // ← Changed from 15 to 5 minutes!
                     enableEmail: true, // ← Changed from false to true
                     enableInApp: true,
                 };
@@ -53,7 +53,7 @@ export class ReminderService {
         } catch (error) {
             logger.error('Error fetching reminder settings', error);
             return {
-                defaultReminderMinutes: 15,
+                defaultReminderMinutes: 5, // ← Changed from 15 to 5 minutes!
                 enableEmail: true, // ← Changed from false to true
                 enableInApp: true,
             };
@@ -236,20 +236,28 @@ export class ReminderService {
                 );
             }
 
+
             // Email notification
             if (reminder.channels.includes('email')) {
-                // Get user email from Firebase Auth
-                const userDoc = await db.collection('users').doc(reminder.userId).get();
-                const userData = userDoc.data();
-                const userEmail = userData?.email;
+                try {
+                    // Get user email from Firebase Auth
+                    const userRecord = await auth.getUser(reminder.userId);
+                    const userEmail = userRecord.email;
 
-                if (userEmail) {
-                    await emailService.sendEventReminder(
-                        userEmail,
-                        reminder.eventTitle,
-                        eventStartTime,
-                        reminder.minutesBefore
-                    );
+                    if (userEmail) {
+                        logger.debug('Sending email reminder', { to: userEmail, event: reminder.eventTitle });
+                        await emailService.sendEventReminder(
+                            userEmail,
+                            reminder.eventTitle,
+                            eventStartTime,
+                            reminder.minutesBefore
+                        );
+                        logger.success('Email reminder sent', { to: userEmail });
+                    } else {
+                        logger.warn('User has no email address', { userId: reminder.userId });
+                    }
+                } catch (error) {
+                    logger.error('Error getting user email or sending reminder', error);
                 }
             }
 
