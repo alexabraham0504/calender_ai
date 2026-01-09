@@ -303,85 +303,80 @@ const Navbar: React.FC = () => {
                 .nav-link {
                     display: flex;
                     align-items: center;
-                    gap: 0.5rem;
-                    padding: 0.625rem 1rem;
+                    gap: 0.4rem;
+                    padding: 0.5rem 0.875rem;
                     border-radius: 10px;
                     text-decoration: none;
                     font-family: 'Inter', sans-serif;
-                    font-size: 0.9375rem;
+                    font-size: 0.875rem;
                     font-weight: 600;
-                    color: #334155;
+                    background: rgba(102, 126, 234, 0.1);
+                    color: #667eea;
                     transition: all 0.3s ease;
                     position: relative;
-                    overflow: hidden;
                 }
 
                 .dark .nav-link {
-                    color: #e2e8f0;
-                }
-
-                .nav-link::before {
-                    content: '';
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-                    opacity: 0;
-                    transition: opacity 0.3s ease;
-                }
-
-                .nav-link:hover::before {
-                    opacity: 1;
+                    background: rgba(129, 140, 248, 0.1);
+                    color: #a5b4fc;
                 }
 
                 .nav-link:hover {
-                    color: #667eea;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
                     transform: translateY(-2px);
+                    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.25);
                 }
 
                 .dark .nav-link:hover {
-                    color: #818cf8;
+                    background: linear-gradient(135deg, #818cf8 0%, #8b5cf6 100%);
+                    box-shadow: 0 4px 15px rgba(129, 140, 248, 0.3);
                 }
 
                 .nav-link svg {
-                    width: 18px;
-                    height: 18px;
-                    position: relative;
-                    z-index: 1;
+                    width: 16px;
+                    height: 16px;
+                    flex-shrink: 0;
+                    transition: transform 0.3s ease;
+                }
+
+                .nav-link:hover svg {
+                    transform: scale(1.1);
                 }
 
                 .nav-link span {
-                    position: relative;
-                    z-index: 1;
+                    font-size: 0.875rem;
                 }
 
                 .nav-button {
                     display: flex;
                     align-items: center;
-                    gap: 0.5rem;
-                    padding: 0.625rem 1.25rem;
+                    gap: 0.4rem;
+                    padding: 0.5rem 0.875rem;
                     border-radius: 10px;
                     text-decoration: none;
                     font-family: 'Inter', sans-serif;
-                    font-size: 0.9375rem;
+                    font-size: 0.875rem;
                     font-weight: 600;
                     border: none;
                     cursor: pointer;
                     transition: all 0.3s ease;
                     position: relative;
-                    overflow: hidden;
                 }
 
                 .nav-button svg {
-                    width: 18px;
-                    height: 18px;
+                    width: 16px;
+                    height: 16px;
+                    flex-shrink: 0;
                     transition: transform 0.3s ease;
                 }
 
+                .nav-button span {
+                    font-size: 0.875rem;
+                }
+
                 .nav-button:hover svg {
-                    transform: translateX(2px);
+                    transform: scale(1.1);
                 }
 
                 .login-button {
@@ -391,39 +386,34 @@ const Navbar: React.FC = () => {
 
                 .dark .login-button {
                     background: rgba(129, 140, 248, 0.1);
-                    color: #818cf8;
+                    color: #a5b4fc;
                 }
 
                 .login-button:hover {
-                    background: rgba(102, 126, 234, 0.2);
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
                     transform: translateY(-2px);
-                    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+                    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.25);
+                }
+
+                .dark .login-button:hover {
+                    background: linear-gradient(135deg, #818cf8 0%, #8b5cf6 100%);
+                    box-shadow: 0 4px 15px rgba(129, 140, 248, 0.3);
                 }
 
                 .signup-button {
                     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                     color: white;
-                    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-                }
-
-                .signup-button::before {
-                    content: '';
-                    position: absolute;
-                    top: 0;
-                    left: -100%;
-                    width: 100%;
-                    height: 100%;
-                    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-                    transition: left 0.5s ease;
-                }
-
-                .signup-button:hover::before {
-                    left: 100%;
+                    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
                 }
 
                 .signup-button:hover {
                     transform: translateY(-2px);
                     box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+                }
+
+                .dark .signup-button {
+                    background: linear-gradient(135deg, #818cf8 0%, #8b5cf6 100%);
                 }
 
                 .logout-button {

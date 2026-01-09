@@ -7,6 +7,9 @@ import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestor
 import { onAuthStateChanged } from 'firebase/auth';
 import Holidays from 'date-holidays';
 import { logger } from '../utils/logger';
+import { getMonthAssignments } from '../utils/monthImages';
+import { listCalendarImages } from '../utils/calendarImageApi';
+import type { CalendarImage } from '../types/image';
 
 // Initialize holidays for India (matching user's timezone +05:30)
 const hd = new Holidays('IN');
@@ -34,6 +37,14 @@ const Calendar: React.FC<CalendarProps> = ({ onEditEvent }) => {
     const [synced, setSynced] = useState(false);
     const [isAIModalOpen, setIsAIModalOpen] = useState(false);
     const [aiIntent, setAiIntent] = useState<ParsedIntent | null>(null);
+    const [monthImages, setMonthImages] = useState<{ [key: string]: string }>({});
+    const [monthAssignments, setMonthAssignments] = useState<{ [month: number]: string }>({});
+    const [imageDisplaySettings, setImageDisplaySettings] = useState({
+        position: 'full',
+        opacity: 30,
+        scaling: 'cover',
+        align: 'center'
+    });
 
     useEffect(() => {
         logger.componentMount('Calendar');
@@ -105,6 +116,60 @@ const Calendar: React.FC<CalendarProps> = ({ onEditEvent }) => {
         };
     }, []);
 
+    // Load month image assignments
+    useEffect(() => {
+        const loadMonthImages = async () => {
+            try {
+                console.log('📸 Starting to load month images...');
+
+                // Get month assignments from localStorage
+                const assignments = getMonthAssignments();
+                console.log('📋 Month assignments from localStorage:', assignments);
+                setMonthAssignments(assignments);
+
+                // Get image display settings from localStorage
+                const savedDisplaySettings = localStorage.getItem('calendarImageDisplaySettings');
+                const displaySettings = savedDisplaySettings ? JSON.parse(savedDisplaySettings) : {
+                    position: 'full',
+                    opacity: 30,
+                    scaling: 'cover',
+                    align: 'center'
+                };
+                console.log('🎨 Display settings:', displaySettings);
+                setImageDisplaySettings(displaySettings);
+
+                // Wait a bit for auth to be ready
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                // Fetch all images from API
+                if (auth.currentUser) {
+                    console.log('👤 User authenticated, fetching images...');
+                    const images = await listCalendarImages();
+                    console.log('✅ Fetched images:', images.length, images);
+
+                    // Create a map of image ID to URL
+                    const imageMap: { [key: string]: string } = {};
+                    images.forEach(img => {
+                        imageMap[img.id] = img.url;
+                        console.log(`🗺️ Mapped image: ${img.id} → ${img.url}`);
+                    });
+
+                    setMonthImages(imageMap);
+                    console.log('✨ Final state:', { assignments, imageMap, displaySettings });
+                    logger.info('Loaded month images', { count: images.length, assignments: Object.keys(assignments).length });
+                } else {
+                    console.warn('⚠️ No authenticated user, cannot fetch images');
+                }
+            } catch (error) {
+                console.error('❌ Error loading month images:', error);
+                logger.error('Error loading month images:', error);
+            }
+        };
+
+        loadMonthImages();
+    }, []); // Only run once on mount
+
+
     const handleDelete = async (id: string) => {
         logger.userAction('Delete event requested', { eventId: id });
 
@@ -132,6 +197,68 @@ const Calendar: React.FC<CalendarProps> = ({ onEditEvent }) => {
             logger.success(`Event deleted successfully in ${duration}ms`, { eventId: id });
         } catch (error) {
             logger.error('Error deleting event', error);
+        }
+    };
+
+    const exportToPDF = async () => {
+        if (!auth.currentUser) {
+            alert('Please log in to export calendar');
+            return;
+        }
+
+        try {
+            const token = await auth.currentUser.getIdToken();
+
+            // Show loading state
+            setLoading(true);
+
+            // Get the background image for current month
+            const currentMonth = currentDate.getMonth();
+            const assignedImageId = monthAssignments[currentMonth];
+            const backgroundImageUrl = assignedImageId ? monthImages[assignedImageId] : null;
+
+            const response = await fetch('http://localhost:5000/api/calendar/print/pdf', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    calendarView: view, // Backend expects "calendarView" not "view"
+                    year: currentDate.getFullYear(),
+                    month: currentDate.getMonth() + 1, // 1-12
+                    backgroundImageUrl, // Pass the background image URL
+                    imageOpacity: imageDisplaySettings.opacity,
+                    imagePosition: imageDisplaySettings.position,
+                    settings: {
+                        paperSize: 'A4',
+                        orientation: 'portrait',
+                        dpi: 300
+                    }
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to generate PDF');
+            }
+
+            // Download the PDF
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `calendar-${currentDate.toLocaleString('default', { month: 'long' })}-${currentDate.getFullYear()}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+
+            logger.success('PDF exported successfully');
+        } catch (error: any) {
+            logger.error('Error exporting PDF:', error);
+            alert(`Failed to export PDF: ${error.message}`);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -206,7 +333,7 @@ const Calendar: React.FC<CalendarProps> = ({ onEditEvent }) => {
                         >
                             <h3 className="text-lg font-bold text-center mb-3 text-gray-800 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{monthName}</h3>
                             <div className="grid grid-cols-7 text-xs text-center text-gray-400 mb-2 font-medium">
-                                {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => <div key={d}>{d}</div>)}
+                                {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, idx) => <div key={`day-${idx}`}>{d}</div>)}
                             </div>
                             <div className="grid grid-cols-7 text-sm gap-y-2 gap-x-1 mb-4">
                                 {blanks.map((_, i) => <div key={`b-${i}`}></div>)}
@@ -309,69 +436,129 @@ const Calendar: React.FC<CalendarProps> = ({ onEditEvent }) => {
         const monthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
         const monthHolidays = getHolidaysInRange(monthStart, monthEnd);
 
+        // Get the assigned image for current month
+        const currentMonth = currentDate.getMonth();
+        const assignedImageId = monthAssignments[currentMonth];
+        const backgroundImage = assignedImageId ? monthImages[assignedImageId] : null;
+
+        // Debug logging
+        console.log('🎨 Background Image Debug:', {
+            currentMonth,
+            monthName: currentDate.toLocaleString('default', { month: 'long' }),
+            assignedImageId,
+            hasImage: !!backgroundImage,
+            backgroundImage,
+            totalAssignments: Object.keys(monthAssignments).length,
+            totalImages: Object.keys(monthImages).length
+        });
+
         return (
             <>
-                <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden shadow-sm bg-white dark:bg-gray-800">
-                    <div className="grid grid-cols-7 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-700">
-                        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                            <div key={day} className="py-3 text-center text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                {day}
-                            </div>
-                        ))}
-                    </div>
-                    <div className="grid grid-cols-7 bg-white dark:bg-gray-800">
-                        {blanks.map((_, i) => (
-                            <div key={`blank-${i}`} className="h-32 border-b border-r border-gray-100 dark:border-gray-700 bg-gray-50/30 dark:bg-gray-900/30"></div>
-                        ))}
-                        {dayArray.map((day) => {
-                            const currentDayDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
-                            // Use local date format instead of ISO to avoid timezone issues
-                            const year = currentDayDate.getFullYear();
-                            const month = String(currentDayDate.getMonth() + 1).padStart(2, '0');
-                            const dayStr = String(currentDayDate.getDate()).padStart(2, '0');
-                            const dateStr = `${year}-${month}-${dayStr}`;
-                            const dayEvents = events.filter((e) => {
-                                // Extract just the date part from the event's startDate
-                                const eventDateStr = e.startDate.substring(0, 10);
-                                return eventDateStr === dateStr;
-                            });
-                            const holidays = getHolidaysForDate(currentDayDate);
-                            const isToday = new Date().toISOString().split('T')[0] === dateStr;
+                <div className="relative border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden shadow-sm">
+                    {/* Background Image - Only for non-grid positions */}
+                    {backgroundImage && imageDisplaySettings.position !== 'grid' && (
+                        <div
+                            className="absolute z-0"
+                            style={{
+                                backgroundImage: `url(${backgroundImage})`,
+                                backgroundSize: (imageDisplaySettings as any).scaling || 'cover',
+                                backgroundPosition: (imageDisplaySettings as any).align || 'center',
+                                opacity: imageDisplaySettings.opacity / 100,
+                                left: 0,
+                                right: 0,
+                                height: imageDisplaySettings.position === 'top' || imageDisplaySettings.position === 'bottom'
+                                    ? '40%'
+                                    : '100%',
+                                top: imageDisplaySettings.position === 'bottom'
+                                    ? '60%'
+                                    : '0',
+                                borderRadius: '0',
+                            }}
+                        />
+                    )}
 
-                            return (
-                                <div
-                                    key={day}
-                                    className={`h-32 border-b border-r border-gray-100 dark:border-gray-700 p-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition relative group ${isToday ? 'bg-blue-50/50 dark:bg-blue-900/20' : ''}`}
-                                    onClick={() => {
-                                        // Optional: Click day to add event
-                                    }}
-                                >
-                                    <div className="flex justify-between items-start">
-                                        <div className={`w-7 h-7 flex items-center justify-center rounded-full text-sm font-medium mb-1 ${isToday ? 'bg-blue-600 text-white' : 'text-gray-700 dark:text-gray-300'}`}>
-                                            {day}
-                                        </div>
-                                        {holidays.length > 0 && (
-                                            <div className="text-[10px] font-semibold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-1.5 py-0.5 rounded ml-auto max-w-[70%] truncate" title={holidays[0].name}>
-                                                {holidays[0].name}
-                                            </div>
-                                        )}
-                                    </div>
+                    {/* Debug indicator */}
+                    {backgroundImage && (
+                        <div className="absolute top-2 right-2 z-20 bg-green-500 text-white text-xs px-2 py-1 rounded">
+                            📸 Image Active ({imageDisplaySettings.position}, {imageDisplaySettings.opacity}%)
+                        </div>
+                    )}
 
-                                    <div className="space-y-1 overflow-y-auto max-h-[calc(100%-2rem)] custom-scrollbar mt-1">
-                                        {dayEvents.map((e) => (
-                                            <div
-                                                key={e._id}
-                                                onClick={(evt) => { evt.stopPropagation(); onEditEvent(e); }}
-                                                className={`text-xs px-2 py-1 rounded-md text-white border border-white/20 truncate cursor-pointer hover:opacity-90 transition flex justify-between items-center group/event shadow-sm`}
-                                                style={{ backgroundColor: e.color || '#3b82f6' }}
-                                            >
-                                                <span className="truncate font-medium">{e.title}</span>
-                                            </div>
-                                        ))}
-                                    </div>
+                    {/* Calendar Content with backdrop */}
+                    <div className="relative z-10 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm overflow-hidden">
+                        {/* Grid Background Layer */}
+                        {backgroundImage && imageDisplaySettings.position === 'grid' && (
+                            <div
+                                className="absolute inset-0 z-0"
+                                style={{
+                                    backgroundImage: `url(${backgroundImage})`,
+                                    backgroundSize: (imageDisplaySettings as any).scaling || 'cover',
+                                    backgroundPosition: (imageDisplaySettings as any).align || 'center',
+                                    opacity: imageDisplaySettings.opacity / 100,
+                                }}
+                            />
+                        )}
+                        <div className={`relative z-10 grid grid-cols-7 ${imageDisplaySettings.position === 'grid' ? 'bg-gray-50/50 dark:bg-gray-700/50' : 'bg-gray-50/90 dark:bg-gray-700/90'} border-b border-gray-200 dark:border-gray-700`}>
+                            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+                                <div key={day} className="py-3 text-center text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    {day}
                                 </div>
-                            );
-                        })}
+                            ))}
+                        </div>
+                        <div className={`relative z-10 grid grid-cols-7 ${imageDisplaySettings.position === 'grid' ? 'bg-transparent' : 'bg-white dark:bg-gray-800'}`}>
+                            {blanks.map((_, i) => (
+                                <div key={`blank-${i}`} className={`h-32 border-b border-r border-gray-100 dark:border-gray-700 ${imageDisplaySettings.position === 'grid' ? 'bg-transparent' : 'bg-gray-50/30 dark:bg-gray-900/30'}`}></div>
+                            ))}
+                            {dayArray.map((day) => {
+                                const currentDayDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+                                // Use local date format instead of ISO to avoid timezone issues
+                                const year = currentDayDate.getFullYear();
+                                const month = String(currentDayDate.getMonth() + 1).padStart(2, '0');
+                                const dayStr = String(currentDayDate.getDate()).padStart(2, '0');
+                                const dateStr = `${year}-${month}-${dayStr}`;
+                                const dayEvents = events.filter((e) => {
+                                    // Extract just the date part from the event's startDate
+                                    const eventDateStr = e.startDate.substring(0, 10);
+                                    return eventDateStr === dateStr;
+                                });
+                                const holidays = getHolidaysForDate(currentDayDate);
+                                const isToday = new Date().toISOString().split('T')[0] === dateStr;
+
+                                return (
+                                    <div
+                                        key={day}
+                                        className={`h-32 border-b border-r border-gray-100 dark:border-gray-700 p-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition relative group ${isToday ? 'bg-blue-50/50 dark:bg-blue-900/20' : (imageDisplaySettings.position === 'grid' ? 'bg-white/20 dark:bg-gray-800/20' : '')}`}
+                                        onClick={() => {
+                                            // Optional: Click day to add event
+                                        }}
+                                    >
+                                        <div className="flex justify-between items-start">
+                                            <div className={`w-7 h-7 flex items-center justify-center rounded-full text-sm font-medium mb-1 ${isToday ? 'bg-blue-600 text-white' : 'text-gray-700 dark:text-gray-300'}`}>
+                                                {day}
+                                            </div>
+                                            {holidays.length > 0 && (
+                                                <div className="text-[10px] font-semibold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-1.5 py-0.5 rounded ml-auto max-w-[70%] truncate" title={holidays[0].name}>
+                                                    {holidays[0].name}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="space-y-1 overflow-y-auto max-h-[calc(100%-2rem)] custom-scrollbar mt-1">
+                                            {dayEvents.map((e) => (
+                                                <div
+                                                    key={e._id}
+                                                    onClick={(evt) => { evt.stopPropagation(); onEditEvent(e); }}
+                                                    className={`text-xs px-2 py-1 rounded-md text-white border border-white/20 truncate cursor-pointer hover:opacity-90 transition flex justify-between items-center group/event shadow-sm`}
+                                                    style={{ backgroundColor: e.color || '#3b82f6' }}
+                                                >
+                                                    <span className="truncate font-medium">{e.title}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
                     </div>
                 </div>
                 {renderHolidaysList(monthHolidays, `Holidays in ${currentDate.toLocaleString('default', { month: 'long' })}`)}
@@ -604,6 +791,19 @@ const Calendar: React.FC<CalendarProps> = ({ onEditEvent }) => {
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
                         </svg>
+                    </button>
+
+                    {/* Print/Export PDF Button */}
+                    <button
+                        onClick={exportToPDF}
+                        disabled={loading}
+                        className="ml-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg transition flex items-center gap-2 text-sm font-medium"
+                        title="Export calendar as PDF"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                        </svg>
+                        {loading ? 'Generating...' : '🖨️ Export PDF'}
                     </button>
                 </div>
             </div>

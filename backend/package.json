@@ -14,16 +14,27 @@
   "license": "ISC",
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "@types/ejs": "^3.1.5",
+    "@types/multer": "^2.0.0",
     "@types/node-cron": "^3.0.11",
     "@types/nodemailer": "^7.0.4",
+    "@types/uuid": "^10.0.0",
+    "axios": "^1.13.2",
+    "browser-image-compression": "^2.0.2",
     "chrono-node": "^2.9.0",
+    "cloudinary": "^2.8.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
+    "ejs": "^3.1.10",
     "express": "^5.1.0",
     "firebase-admin": "^13.6.0",
+    "multer": "^2.0.2",
     "node-cron": "^4.2.1",
     "nodemailer": "^7.0.11",
-    "openai": "^6.10.0"
+    "openai": "^6.10.0",
+    "puppeteer": "^24.33.0",
+    "sharp": "^0.34.5",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",

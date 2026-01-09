@@ -1,0 +1,53 @@
+# Docker Compose for Calendar Application Development
+# Includes backend with Puppeteer support
+
+version: '3.8'
+
+services:
+  # Backend API with Puppeteer
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: calendar-backend
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=development
+      - PORT=5000
+      - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}
+      - FIREBASE_SERVICE_ACCOUNT=${FIREBASE_SERVICE_ACCOUNT}
+      - FIREBASE_STORAGE_BUCKET=${FIREBASE_STORAGE_BUCKET}
+      - MAX_UPLOAD_MB=10
+      - AI_PROVIDER=mock
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - STABILITY_API_KEY=${STABILITY_API_KEY:-}
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    networks:
+      - calendar-network
+    restart: unless-stopped
+    # Add shm_size for Puppeteer stability
+    shm_size: '2gb'
+  # Frontend (optional - can run separately with Astro dev)
+  # frontend:
+  #   image: node:18-alpine
+  #   container_name: calendar-frontend
+  #   working_dir: /app
+  #   command: npm run dev
+  #   ports:
+  #     - "4321:4321"
+  #   volumes:
+  #     - ./frontend:/app
+  #     - /app/node_modules
+  #   networks:
+  #     - calendar-network
+  #   restart: unless-stopped
+
+networks:
+  calendar-network:
+    driver: bridge
+
+volumes:
+  backend_node_modules:

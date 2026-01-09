@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calendar Print - <%= calendarView %>
+      <%= year %>
+        <% if (month) { %> / <%= month %>
+            <% } %>
+  </title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    @page {
+      size: <%=paperSize %> <%=orientation %>;
+      margin: 10mm;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      color: #1a202c;
+      background: white;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
+    .calendar-container {
+      position: relative;
+      width: 100%;
+    }
+
+    .image-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      /* Above basic background */
+      pointer-events: none;
+    }
+
+    .image-layer img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .calendar-content {
+      position: relative;
+      z-index: 10;
+      /* Above images */
+      width: 100%;
+      padding: 10mm;
+      /* Reduced padding to fit on one page */
+    }
+
+    .calendar-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .calendar-title {
+      font-size: 24px;
+      font-weight: 800;
+      color: #1a202c;
+      text-transform: uppercase;
+      letter-spacing: -0.02em;
+    }
+
+    .calendar-subtitle {
+      font-size: 10px;
+      font-weight: bold;
+      color: #718096;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-top: 4px;
+    }
+
+    .month-view {
+      grid-template-columns: repeat(7, 1fr);
+    }
+
+    .week-view {
+      grid-template-columns: repeat(7, 1fr);
+    }
+
+    .day-view {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto 1fr;
+    }
+
+    .calendar-day-header,
+    .calendar-day {
+      position: relative;
+      z-index: 10;
+      padding: 4px;
+      min-height: 90px;
+    }
+
+    /* Standard background for cells */
+    .calendar-grid .calendar-day,
+    .calendar-grid .calendar-day-header {
+      background: #ffffff;
+    }
+
+    .calendar-day-header {
+      background: #374151 !important;
+      color: white;
+      font-weight: bold;
+      text-align: center;
+      padding: 8px 4px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      min-height: auto;
+    }
+
+    .day-number {
+      font-size: 16px;
+      font-weight: bold;
+      color: #2d3748;
+      margin-bottom: 8px;
+    }
+
+    .day-events {
+      font-size: 11px;
+    }
+
+    .event-item {
+      background: rgba(235, 248, 255, 0.9);
+      border-left: 3px solid #3182ce;
+      padding: 4px 6px;
+      margin-bottom: 4px;
+      border-radius: 2px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .holiday-item {
+      background: rgba(254, 245, 231, 0.9);
+      border-left: 3px solid #f59e0b;
+      padding: 4px 6px;
+      margin-bottom: 4px;
+      border-radius: 2px;
+      font-weight: 500;
+    }
+
+    .other-month {
+      color: #718096;
+      background: rgba(247, 250, 252, 0.6) !important;
+    }
+
+    .today {
+      background: rgba(237, 242, 247, 0.7) !important;
+      border: 2px solid #3182ce;
+    }
+
+    .calendar-grid {
+      position: relative;
+      display: grid;
+      gap: 1px;
+      background: #e2e8f0;
+      border: 1px solid #e2e8f0;
+      overflow: hidden;
+    }
+
+    /* MODES FOR GRID BACKGROUND */
+    .calendar-grid.has-grid-bg {
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    .calendar-grid.has-grid-bg .calendar-day {
+      background: transparent !important;
+    }
+
+    .calendar-grid.has-grid-bg .calendar-day-header {
+      background: rgba(31, 41, 55, 0.9) !important;
+    }
+
+    .calendar-grid.has-grid-bg .other-month {
+      background: rgba(247, 250, 252, 0.1) !important;
+    }
+
+    @media print {
+      body {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="calendar-container">
+    <!-- Image Layers -->
+    <% if (imageElements && imageElements.length> 0) { %>
+      <% imageElements.forEach(function(element) { %>
+        <% if (element.includeInPrint) { %>
+          <div class="image-layer" style="
+              left: <%= element.x * 100 %>%;
+              top: <%= element.y * 100 %>%;
+              width: <%= element.width * 100 %>%;
+              height: <%= element.height * 100 %>%;
+              opacity: <%= element.opacity %>;
+              z-index: <%= element.zIndex %>;
+            ">
+            <img src="<%= element.imageUrl %>" alt="Calendar image" style="
+                object-fit: <%= element.scaling || 'cover' %>;
+                object-position: <%= element.alignment || 'center' %>;
+            ">
+            <% if (typeof includeCaptions !=='undefined' && includeCaptions && element.caption) { %>
+              <div class="image-caption">
+                <%= element.caption %>
+              </div>
+              <% } %>
+          </div>
+          <% } %>
+            <% }); %>
+              <% } %>
+
+                <!-- Calendar Content -->
+                <div class="calendar-content">
+                  <div class="calendar-header">
+                    <div class="calendar-title">
+                      <%= year %>
+                        <% if (month) { %>
+                          - <%= monthNames[month - 1] %>
+                            <% } %>
+                    </div>
+                    <% if (calendarView) { %>
+                      <div class="calendar-subtitle">
+                        <%= calendarView.toUpperCase() %> VIEW
+                      </div>
+                      <% } %>
+                  </div>
+
+                  <!-- Month/Week Grid -->
+                  <% if (calendarView==='month' || calendarView==='week' ) { %>
+                    <div
+                      class="calendar-grid <%= calendarView %>-view <%= (typeof gridBackground !== 'undefined' && gridBackground) ? 'has-grid-bg' : '' %>"
+                      style="<%= (typeof gridBackground !== 'undefined' && gridBackground) ? `background-image: url('${gridBackground.url}'); background-size: ${gridBackground.scaling}; background-position: ${gridBackground.align};` : '' %>">
+
+                      <!-- Day headers -->
+                      <% dayNames.forEach(function(day) { %>
+                        <div class="calendar-day-header">
+                          <%= day %>
+                        </div>
+                        <% }); %>
+
+                          <!-- Days -->
+                          <% calendarDays.forEach(function(day) { %>
+                            <div
+                              class="calendar-day <%= day.isOtherMonth ? 'other-month' : '' %> <%= day.isToday ? 'today' : '' %>">
+                              <div class="day-number">
+                                <%= day.date %>
+                              </div>
+                              <div class="day-events">
+                                <% if (includeHolidays && day.holidays && day.holidays.length> 0) { %>
+                                  <% day.holidays.forEach(function(holiday) { %>
+                                    <div class="holiday-item">
+                                      <%= holiday %>
+                                    </div>
+                                    <% }); %>
+                                      <% } %>
+                                        <% if (includeEvents && day.events && day.events.length> 0) { %>
+                                          <% day.events.forEach(function(event) { %>
+                                            <div class="event-item">
+                                              <%= event.title %>
+                                            </div>
+                                            <% }); %>
+                                              <% } %>
+                              </div>
+                            </div>
+                            <% }); %>
+                    </div>
+                    <% } %>
+
+                      <!-- Day View -->
+                      <% if (calendarView==='day' && typeof dayData !=='undefined' && dayData) { %>
+                        <div class="calendar-grid day-view">
+                          <div class="calendar-day-header">
+                            <%= dayData.dayName %>, <%= dayData.monthName %>
+                                <%= dayData.date %>, <%= year %>
+                          </div>
+                          <div class="calendar-day">
+                            <% if (includeHolidays && dayData.holidays && dayData.holidays.length> 0) { %>
+                              <h3 style="margin-bottom: 10px;">Holidays</h3>
+                              <% dayData.holidays.forEach(function(holiday) { %>
+                                <div class="holiday-item">
+                                  <%= holiday %>
+                                </div>
+                                <% }); %>
+                                  <% } %>
+                                    <% if (includeEvents && dayData.events && dayData.events.length> 0) { %>
+                                      <h3 style="margin: 20px 0 10px 0;">Events</h3>
+                                      <% dayData.events.forEach(function(event) { %>
+                                        <div class="event-item" style="margin-bottom: 8px; white-space: normal;">
+                                          <strong>
+                                            <%= event.title %>
+                                          </strong>
+                                          <% if (event.time) { %>
+                                            <br><small>
+                                              <%= event.time %>
+                                            </small>
+                                            <% } %>
+                                              <% if (event.description) { %>
+                                                <br>
+                                                <%= event.description %>
+                                                  <% } %>
+                                        </div>
+                                        <% }); %>
+                                          <% } %>
+                          </div>
+                        </div>
+                        <% } %>
+                </div>
+  </div>
+</body>
+
+</html>
